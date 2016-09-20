@@ -38,12 +38,12 @@ options:
   weight = 1
   # only support GET、POST
   method = GET
-  url = http://www.baidu.com/
+  url = http://www.example.com/
   
   [request]
   weight = 2
   method = POST
   content_type = text/plain
-  url = http://www.baidu.com/
+  url = http://www.example.com/
   post_data = a=1&b=2
   ```
