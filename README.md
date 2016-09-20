@@ -2,7 +2,7 @@ kbang
 ===================================
 http 压力测试工具，支持不同类型请求并发，支持请求权重
 
-###Install package
+###工具安装
 
 ```$ go get github.com/kaimixu/kbang```
 
