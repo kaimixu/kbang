@@ -98,14 +98,16 @@ func (this *Roboter) Run() {
 	signal.Notify(s, os.Interrupt)
 
 	fmt.Fprintf(os.Stdout, "start...\n")
+	st := time.Now()
 	go func() {
 		<-s
-		this.output.finalize()
+		fmt.Println("receive  sigint\n")
+		this.output.finalize(time.Now().Sub(st).Seconds())
 		os.Exit(1)
 	}()
 
 	this.startWorkers()
-	this.output.finalize()
+	this.output.finalize(time.Now().Sub(st).Seconds())
 }
 
 func (this *Roboter) startWorkers() {

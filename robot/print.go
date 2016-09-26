@@ -3,6 +3,7 @@ package robot
 import (
 	"fmt"
 	"time"
+	"os"
 )
 
 type result struct {
@@ -35,7 +36,8 @@ func (this *output) addResult(res *result) {
 	this.results <- res
 }
 
-func (this *output) finalize() {
+func (this *output) finalize(costTime float64) {
+	this.costTimeTotal = costTime
 
 	for {
 		select {
@@ -46,7 +48,6 @@ func (this *output) finalize() {
 			}else {
 				this.reqNumSucc++
 			}
-			this.costTimeTotal += res.duration.Seconds()
 		default:
 			this.rps = float64(this.reqNumTotal) / this.costTimeTotal
 			this.average = this.costTimeTotal / float64(this.reqNumTotal)
@@ -67,4 +68,6 @@ func (this *output) print() {
 		fmt.Printf("  Requests per second:\t%4.4f\n", this.rps)
 		fmt.Printf("  Average time per request:\t%4.4f\n", this.average)
 	}
+
+	os.Exit(0)
 }

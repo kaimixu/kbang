@@ -52,7 +52,7 @@ func main() {
 	flag.StringVar(&header, "H", "", "")
 	flag.Parse()
 
-	if flag.NArg() < 1 && len(cfgFile) == 0 {
+	if flag.NArg() < 1 && cfgFile == "" {
 		abort("")
 	}
 
