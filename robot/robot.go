@@ -9,9 +9,8 @@ import (
 	"errors"
 	"io/ioutil"
 	"sync"
-	"net"
-	"io"
 	"fmt"
+	"net"
 )
 
 type RequestConf struct {
@@ -29,18 +28,14 @@ type HttpConf struct {
 	Request 	[10]RequestConf `request`
 }
 
-type request struct {
-	preq 	*http.Request
-	conf 	*RequestConf
-}
-
 type Roboter struct {
 	n 		int
 	c 		int
 	weight 		int
-	requests 	[]request
 	httpConf 	*HttpConf
 
+	hc 		*http.Client
+	requests	[]*http.Request
 	output 		*output
 }
 
@@ -49,7 +44,7 @@ func NewRoboter(n, c int, httpConf *HttpConf) *Roboter{
 		n:		n,
 		c:		c,
 		httpConf:	httpConf,
-		requests:	make([]request, 0),
+		requests:	make([]*http.Request, 0),
 		output:		newOutput(n, c),
 	}
 }
@@ -63,6 +58,11 @@ func (this *Roboter) CreateRequest() error {
 		}
 	}
 
+	type request struct {
+		preq 	*http.Request
+		conf 	*RequestConf
+	}
+	reqs := make([]*request, 0)
 	for _, reqC := range this.httpConf.Request {
 		method := strings.ToUpper(reqC.Method)
 		if method == "" {
@@ -84,10 +84,15 @@ func (this *Roboter) CreateRequest() error {
 		}
 
 		for i := 0; i < reqC.Weight; i++ {
-			this.requests = append(this.requests, request{preq:r, conf:&reqC})
+			reqs = append(reqs, &request{preq:r, conf:&reqC})
 		}
 
 		this.weight += reqC.Weight
+	}
+
+	for i := 0; i < this.n; i++ {
+		req := reqs[i%this.weight]
+		this.requests = append(this.requests, cloneRequest(req.preq, req.conf.PostData))
 	}
 
 	return  nil
@@ -97,11 +102,20 @@ func (this *Roboter) Run() {
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, os.Interrupt)
 
-	fmt.Fprintf(os.Stdout, "start...\n")
+	tr := &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout:   time.Duration(this.httpConf.Timeout) * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).Dial,
+		DisableKeepAlives: !this.httpConf.KeepAlive,
+	}
+	this.hc = &http.Client{Transport: tr}
+
+	fmt.Println("start...")
 	st := time.Now()
 	go func() {
 		<-s
-		fmt.Println("receive  sigint\n")
+		fmt.Println("receive  sigint")
 		this.output.finalize(time.Now().Sub(st).Seconds())
 		os.Exit(1)
 	}()
@@ -115,46 +129,35 @@ func (this *Roboter) startWorkers() {
 	wg.Add(this.c)
 
 	for i := 0; i < this.c; i++ {
-		go func() {
-			this.startWorker(this.n / this.c)
+		go func(rid int) {
+			this.startWorker(rid, this.n / this.c)
 			wg.Done()
-		}()
+		}(i)
 	}
 	wg.Wait()
 }
 
-func (this *Roboter) startWorker(n int) {
-	tr := &http.Transport{
-		Dial: (&net.Dialer{
-			Timeout:   time.Duration(this.httpConf.Timeout) * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).Dial,
-		DisableKeepAlives: !this.httpConf.KeepAlive,
-	}
-	client := &http.Client{Transport: tr}
-
-	for i := 0; i < n; i++ {
-		req := &this.requests[i%this.weight]
-		this.sendRequest(client, req)
+func (this *Roboter) startWorker(rid, num int) {
+	for i := 0; i < num; i++ {
+		req := this.requests[rid*num+i]
+		this.sendRequest(req)
 	}
 }
 
-func (this *Roboter) sendRequest(c *http.Client, req *request) {
+func (this *Roboter) sendRequest(req *http.Request) {
 	s := time.Now()
 	var code int
 
-	resp, err := c.Do(cloneRequest(req.preq, req.conf.PostData))
+	resp, err := this.hc.Do(req)
 	if err == nil {
 		code = resp.StatusCode
-		io.Copy(ioutil.Discard, resp.Body)
-		resp.Body.Close()
 	}
+
 	this.output.addResult(&result{
 		statusCode:    code,
 		duration:      time.Now().Sub(s),
 	})
 }
-
 
 func cloneRequest(r *http.Request, body string) *http.Request {
 	r2 := new(http.Request)

@@ -7,6 +7,8 @@ import (
 	"os"
 	"github.com/kaimixu/kbang/conf"
 	"github.com/kaimixu/kbang/robot"
+	//"./conf"
+	//"./robot"
 )
 
 var (
@@ -27,9 +29,9 @@ var usage =
 options:
     -n  Number of requests to run (default: 10)
     -c  Number of requests to run concurrency (default: 1)
-    -t  Request connection timeout in second (default: 1s)
+    -t  Request connection timeout in second (default: 5s)
     -H  Http header, eg. -H "Host: www.example.com"
-    -k[=true|false]  Http keep-alive (default: true)
+    -k[=true|false]  Http keep-alive (default: false)
     -d  Http request body to POST
     -T  Content-type header to POST, eg. 'application/x-www-form-urlencoded'
         (Default：text/plain)
@@ -44,8 +46,8 @@ func main() {
 	}
 	flag.IntVar(&n, "n", 10, "")
 	flag.IntVar(&c, "c", 1, "")
-	flag.IntVar(&t, "t", 1, "")
-	flag.BoolVar(&keepalive, "k", true, "")
+	flag.IntVar(&t, "t", 5, "")
+	flag.BoolVar(&keepalive, "k", false, "")
 	flag.StringVar(&cfgFile, "f", "", "")
 	flag.StringVar(&requestBody, "d", "", "")
 	flag.StringVar(&contentType, "T", "text/plain", "")

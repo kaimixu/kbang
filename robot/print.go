@@ -61,12 +61,12 @@ func (this *output) print() {
 	if this.reqNumTotal > 0 {
 		fmt.Printf("Summary:\n")
 		fmt.Printf("  Concurrency Level:\t%d\n", this.c)
-		fmt.Printf("  Time taken for tests:\t%4.4f secs\n", this.costTimeTotal)
+		fmt.Printf("  Time taken for tests:\t%0.4f secs\n", this.costTimeTotal)
 		fmt.Printf("  Complete requests:\t%d\n", this.reqNumTotal)
 		fmt.Printf("  Failed requests:\t%d\n", this.reqNumFail)
 		fmt.Printf("  Success requests:\t%d\n", this.reqNumSucc)
-		fmt.Printf("  Requests per second:\t%4.4f\n", this.rps)
-		fmt.Printf("  Average time per request:\t%4.4f\n", this.average)
+		fmt.Printf("  Requests per second:\t%0.4f\n", this.rps)
+		fmt.Printf("  Average time per request:\t%0.4f\n", this.average)
 	}
 
 	os.Exit(0)
