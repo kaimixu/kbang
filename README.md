@@ -17,7 +17,7 @@ options:
     -c  Number of requests to run concurrency (default: 1)
     -t  Request connection timeout in second (default: 1s)
     -H  Http header, eg. -H "Host: www.example.com"
-    -k[=true|false]  Http keep-alive (default: true)
+    -k[=true|false]  Http keep-alive (default: false)
     -d  Http request body to POST
     -T  Content-type header to POST, eg. 'application/x-www-form-urlencoded'
         (Default：text/plain)
